@@ -22,6 +22,7 @@ global{
 		create people number:200;
 	}	
 }
+
 species people skills:[moving]{
 	point target;
 	path path_to_follow;
@@ -52,11 +53,12 @@ species road{
 }
 
 grid cells width:5 height:10{
+	rgb cell_color <- rgb(0,0,0,0);
 	list<blocks> blocks_inside -> {blocks inside self};
 	bool flgPrint <- true;
 	
 	aspect default{
-		draw shape color:rgb(100,100,100,0.1) border:#white width:2.0;
+		draw shape color:cell_color border:#white width:2.0;
 	}
 	
 	reflex main when: flgPrint{
@@ -66,12 +68,20 @@ grid cells width:5 height:10{
 }
 
 species blocks{
+	init{
+		cells parent_cell <- one_of(cells where(each overlaps self));
+		ask parent_cell{
+			cell_color <- rgb(100,50,50,0.2);
+		}		
+	}
+	
 	aspect default{
 		draw shape color:rgb (108, 82, 235,0.2);
 	}
 }
 
 species building{
+	cells parent_cell <- one_of(cells where(each overlaps self));
 	aspect default{
 		draw shape color:#darkturquoise;
 	}
