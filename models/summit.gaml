@@ -4,22 +4,21 @@
 * Author: Gamaliel Palomo, Liliana Durán, Mónica Gómez and Mario Siller
 * Tags: 
 */
-
-
 model summit
 
 import "constants.gaml"
 
 global{
-	geometry shape <- envelope(blocks_file);
+	geometry shape <- envelope(mask_file);
 	graph road_network;
 	list<cells> useful_cells;
 	init{
 		step <- 10#second;
 		create road from: roads_file;
 		create blocks from:blocks_file;
+		create sector from:grids_file;
 		road_network <- as_edge_graph(road);
-		create building number:5;
+		create building from:buildings_file;
 		create people number:200;
 		ask cells - useful_cells{
 			do die;
@@ -32,28 +31,28 @@ species people skills:[moving]{
 	point target;
 	path path_to_follow;
 	init{
-		location <- any_location_in(one_of(blocks));
-		target <- any_location_in(one_of(blocks));
+		location <- any_location_in(one_of(sector));
+		target <- any_location_in(one_of(sector));
 	}
 	reflex mobility{
 		loop while: path_to_follow = nil{
-			target <- any_location_in(one_of(blocks));
+			target <- any_location_in(one_of(sector));
 			path_to_follow <- path_between(road_network,location,target);
 		}
 		if target = location{
-			target <- any_location_in(one_of(road));
+			target <- any_location_in(one_of(sector));
 			path_to_follow <- path_between(road_network,location,target);
 		}
 		do follow path:path_to_follow;
 	}
 	aspect default{
-		draw circle(6) color:#yellow;
+		draw circle(3) color:#yellow;
 	}
 }
 
 species road{
 	aspect default{
-		draw shape color:#gray;
+		draw shape color:rgb(20,20,20,0.8) width:15.0;
 	}	
 }
 
@@ -65,7 +64,6 @@ grid cells width:5 height:10{
 	aspect default{
 		draw shape color:cell_color border:rgb(255,255,255,0.2) width:3.0;
 	}
-	
 	reflex main when: flgPrint{
 		if length(blocks_inside)>0
 		{
@@ -78,15 +76,10 @@ grid cells width:5 height:10{
 
 species blocks{
 	init{
-		
 		cells parent_cell <- one_of(cells where(each overlaps self));
 		if not (parent_cell in useful_cells){
 			useful_cells <+ parent_cell;
-		}
-		
-		ask parent_cell{
-			cell_color <- rgb(100,50,50,0.2);
-		}		
+		}	
 	}
 	
 	aspect default{
@@ -96,22 +89,29 @@ species blocks{
 
 species building{
 	init{
-		location <- any_location_in(one_of(blocks));
 		cells parent_cell <- one_of(cells where(each overlaps self));
 	}
 	aspect default{
-		draw house_icon size:80;
+		draw shape color:rgb (81, 188, 58,255) depth:10;
+		//draw house_icon size:80;
+	}
+}
+
+species sector{
+	aspect default{
+		draw shape color:rgb(50,50,50,0.2) border:#white width:1.0;
 	}
 }
 
 experiment simulation type:gui{
 	output{
 		display "main" background:#black draw_env:false{
-			//species road aspect:default;
+			species road aspect:default;
+			species sector aspect:default;
 			species people aspect:default;
-			species blocks aspect:default refresh:false;
+			//species blocks aspect:default refresh:false;
 			species building aspect:default refresh:false;
-			species cells aspect:default;
+			//species cells aspect:default;
 		}
 	}
 }
