@@ -13,6 +13,7 @@ import "constants.gaml"
 global{
 	geometry shape <- envelope(blocks_file);
 	graph road_network;
+	list<cells> useful_cells;
 	init{
 		step <- 10#second;
 		create road from: roads_file;
@@ -20,6 +21,10 @@ global{
 		road_network <- as_edge_graph(road);
 		create building number:5;
 		create people number:200;
+		ask cells - useful_cells{
+			do die;
+		}
+		useful_cells<-nil;
 	}	
 }
 
@@ -58,7 +63,7 @@ grid cells width:5 height:10{
 	bool flgPrint <- true;
 	
 	aspect default{
-		draw shape color:cell_color border:#white width:2.0;
+		draw shape color:cell_color border:rgb(255,255,255,0.2) width:3.0;
 	}
 	
 	reflex main when: flgPrint{
@@ -70,6 +75,9 @@ grid cells width:5 height:10{
 species blocks{
 	init{
 		cells parent_cell <- one_of(cells where(each overlaps self));
+		if not (parent_cell in useful_cells){
+			useful_cells <+ parent_cell;
+		}
 		ask parent_cell{
 			cell_color <- rgb(100,50,50,0.2);
 		}		
@@ -90,7 +98,7 @@ species building{
 experiment simulation type:gui{
 	output{
 		display "main" background:#black draw_env:false{
-			species road aspect:default;
+			//species road aspect:default;
 			species people aspect:default;
 			species blocks aspect:default;
 			species building aspect:default;
