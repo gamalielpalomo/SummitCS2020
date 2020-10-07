@@ -44,21 +44,33 @@ species people skills:[moving]{
 		draw circle(6) color:#yellow;
 	}
 }
+
 species road{
 	aspect default{
 		draw shape color:#gray;
 	}	
 }
-grid cells width:10 height:15{
+
+grid cells width:5 height:10{
+	list<blocks> blocks_inside -> {blocks inside self};
+	bool flgPrint <- true;
+	
 	aspect default{
 		draw shape color:rgb(100,100,100,0.1) border:#white width:2.0;
 	}
+	
+	reflex main when: flgPrint{
+		write "Cell: "+grid_x+","+grid_y+" ---> " +blocks_inside;
+		flgPrint<-false;
+	}
 }
+
 species blocks{
 	aspect default{
 		draw shape color:rgb (108, 82, 235,0.2);
 	}
 }
+
 species building{
 	aspect default{
 		draw shape color:#darkturquoise;
