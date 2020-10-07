@@ -89,9 +89,12 @@ species blocks{
 }
 
 species building{
-	cells parent_cell <- one_of(cells where(each overlaps self));
+	init{
+		location <- any_location_in(one_of(blocks));
+		cells parent_cell <- one_of(cells where(each overlaps self));
+	}
 	aspect default{
-		draw shape color:#darkturquoise;
+		draw house_icon size:80;
 	}
 }
 
