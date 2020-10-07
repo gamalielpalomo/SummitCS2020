@@ -109,8 +109,8 @@ experiment simulation type:gui{
 		display "main" background:#black draw_env:false{
 			//species road aspect:default;
 			species people aspect:default;
-			species blocks aspect:default;
-			species building aspect:default;
+			species blocks aspect:default refresh:false;
+			species building aspect:default refresh:false;
 			species cells aspect:default;
 		}
 	}
