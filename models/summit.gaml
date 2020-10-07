@@ -26,14 +26,19 @@ species people skills:[moving]{
 	point target;
 	path path_to_follow;
 	init{
-		target <- any_location_in(one_of(road));
+		location <- any_location_in(one_of(blocks));
+		target <- any_location_in(one_of(blocks));
 	}
 	reflex mobility{
+		loop while: path_to_follow = nil{
+			target <- any_location_in(one_of(blocks));
+			path_to_follow <- path_between(road_network,location,target);
+		}
 		if target = location{
 			target <- any_location_in(one_of(road));
-			
+			path_to_follow <- path_between(road_network,location,target);
 		}
-		do goto target:target on:road_network;
+		do follow path:path_to_follow;
 	}
 	aspect default{
 		draw circle(6) color:#yellow;
@@ -44,7 +49,7 @@ species road{
 		draw shape color:#gray;
 	}	
 }
-grid cells width:5 height:10{
+grid cells width:10 height:15{
 	aspect default{
 		draw shape color:rgb(100,100,100,0.1) border:#white width:2.0;
 	}
