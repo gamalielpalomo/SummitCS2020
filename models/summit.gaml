@@ -19,7 +19,12 @@ global{
 		create sector from:grids_file;
 		road_network <- as_edge_graph(road);
 		create building from:buildings_file;
-		create people number:200;
+		ask building{
+			create people number:1+rnd(3){
+				home <- myself;
+				location <- home.location;
+			}
+		}
 		ask cells - useful_cells{
 			do die;
 		}
@@ -28,10 +33,10 @@ global{
 }
 
 species people skills:[moving]{
+	building home;
 	point target;
 	path path_to_follow;
 	init{
-		location <- any_location_in(one_of(sector));
 		target <- any_location_in(one_of(sector));
 	}
 	reflex mobility{
