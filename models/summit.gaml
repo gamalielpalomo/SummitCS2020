@@ -67,17 +67,23 @@ grid cells width:5 height:10{
 	}
 	
 	reflex main when: flgPrint{
-		write "Cell: "+grid_x+","+grid_y+" ---> " +blocks_inside;
+		if length(blocks_inside)>0
+		{
+			write "Cell: "+grid_x+","+grid_y+" ---> " +blocks_inside;
+		}
+		
 		flgPrint<-false;
 	}
 }
 
 species blocks{
 	init{
+		
 		cells parent_cell <- one_of(cells where(each overlaps self));
 		if not (parent_cell in useful_cells){
 			useful_cells <+ parent_cell;
 		}
+		
 		ask parent_cell{
 			cell_color <- rgb(100,50,50,0.2);
 		}		
