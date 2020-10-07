@@ -14,10 +14,28 @@ global{
 	geometry shape <- envelope(roads_file);
 	graph road_network;
 	init{
+		step <- 10#second;
 		create road from: roads_file;
 		create blocks from:blocks_file;
 		road_network <- as_edge_graph(road);
+		create building number:5;
+		create people number:200;
 	}	
+}
+species people skills:[moving]{
+	point target;
+	init{
+		target <- any_location_in(one_of(road));
+	}
+	reflex mobility{
+		if target = location{
+			target <- any_location_in(one_of(road));
+		}
+		do goto target:target on:road_network;
+	}
+	aspect default{
+		draw circle(10) color:#yellow;
+	}
 }
 species road{
 	aspect default{
@@ -34,12 +52,19 @@ species blocks{
 		draw shape color:rgb (108, 82, 235,0.5);
 	}
 }
+species building{
+	aspect default{
+		draw shape color:#darkturquoise;
+	}
+}
 
 experiment simulation type:gui{
 	output{
 		display "main"{
 			species road aspect:default;
+			species people aspect:default;
 			species blocks aspect:default;
+			species building aspect:default;
 			species cells aspect:default;
 		}
 	}
