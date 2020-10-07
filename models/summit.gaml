@@ -11,7 +11,7 @@ model summit
 import "constants.gaml"
 
 global{
-	geometry shape <- envelope(roads_file);
+	geometry shape <- envelope(blocks_file);
 	graph road_network;
 	init{
 		step <- 10#second;
@@ -24,17 +24,19 @@ global{
 }
 species people skills:[moving]{
 	point target;
+	path path_to_follow;
 	init{
 		target <- any_location_in(one_of(road));
 	}
 	reflex mobility{
 		if target = location{
 			target <- any_location_in(one_of(road));
+			
 		}
 		do goto target:target on:road_network;
 	}
 	aspect default{
-		draw circle(10) color:#yellow;
+		draw circle(6) color:#yellow;
 	}
 }
 species road{
@@ -49,7 +51,7 @@ grid cells width:5 height:10{
 }
 species blocks{
 	aspect default{
-		draw shape color:rgb (108, 82, 235,0.5);
+		draw shape color:rgb (108, 82, 235,0.2);
 	}
 }
 species building{
@@ -60,7 +62,7 @@ species building{
 
 experiment simulation type:gui{
 	output{
-		display "main"{
+		display "main" background:#black{
 			species road aspect:default;
 			species people aspect:default;
 			species blocks aspect:default;
