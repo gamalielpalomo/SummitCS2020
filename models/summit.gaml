@@ -40,8 +40,8 @@ global{
 			shape <- aux_block.shape;
 		}
 	}
-	action connectivity{
-		beta_index <- beta_index(building as graph);
+	reflex connectivity when:every(1#day){
+		beta_index <- beta_index(one_of(building).my_graph);
 	}
 }
 
@@ -167,6 +167,8 @@ experiment simulation type:gui{
 				draw ".:-0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ()[],>=" at: {0#px,0#px} color:rgb(0,0,0,0) font:font("Arial",19,#bold);
 				draw "People: " +  length(people) at: { 20#px, 60#px } color: #white font:font("Arial",19,#bold);
 				draw ""+current_date.hour+":"+minutes at:{ 20#px, 20#px} color:#white font:font("Arial",55,#bold);
+				draw "Beta index: "+ beta_index at:{20#px, 100#px} color: #white font:font("Arial",19,#bold);
+				
 			}
 		}
 	}
