@@ -1,7 +1,7 @@
 /**
 * Name: summit
 * Based on the internal empty template. 
-* Author: gamaa
+* Author: Gamaliel Palomo, Liliana Durán, Mónica Gómez and Mario Siller
 * Tags: 
 */
 
@@ -67,7 +67,7 @@ species building{
 
 experiment simulation type:gui{
 	output{
-		display "main" background:#black{
+		display "main" background:#black draw_env:false{
 			species road aspect:default;
 			species people aspect:default;
 			species blocks aspect:default;
