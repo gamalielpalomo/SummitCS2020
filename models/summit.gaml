@@ -34,17 +34,33 @@ global{
 			}
 		}
 	}
+	
 	user_command "create park here"{
 		blocks aux_block <- blocks closest_to #user_location;
 		create park{
 			shape <- aux_block.shape;
 		}
 	}
+	
 	reflex connectivity when:every(1#day){
 		beta_index <- beta_index(one_of(building).my_graph);
 	}
+	
+	reflex populate_neighborhood when:every(1#day){
+		int houses_to_build <- rnd(10);
+		ask sector{
+			do calculate_density;
+		}
+		 
+		list<sector> ordered_sector <- sector sort_by (each.no_building);
+		ordered_sector <- houses_to_build last ordered_sector;
+		ask ordered_sector
+		{
+			do build sect:self;
+		}
+	}
+	
 }
-
 
 
 species people skills:[moving]{
@@ -110,12 +126,22 @@ species edge_agent parent: base_edge {
 
 species building parent:graph_node edge_species:edge_agent{
 	float isolation <- 0.0;
+	bool flgCreated <- false;
 	bool related_to (building other){
 		using topology(world){
 			return (location distance_to other < 100#m);	
 		}
     }
+    
 	aspect default{
+		if flgCreated
+		{
+			draw square(7#m) color:rgb (81, 188, 58,255) depth:10;
+		}
+		else
+		{
+			draw shape color:rgb (81, 188, 58,255) depth:10;
+		}
 		draw shape color:rgb (81, 188, 58,255) depth:10;		
 		//draw house_icon size:80;
 	}
@@ -129,12 +155,39 @@ species park{
 }
 
 species sector{
+	list<building> buildings -> {building inside self};
+	int no_building<-0;
+	bool flgFull <- false;
+   
+	
 	aspect default{
 		if show_sectors{
 			draw shape color:rgb(50,50,50,0.2) border:#white width:1.0;
 			draw self.name color:#white;
 		}
 	}
+	
+	// metodo que puede usarse para calcular una metrica de construcción
+	action calculate_density
+	{
+		no_building <- length(agents_inside(self));
+	}
+	
+	
+	
+	// constrye una nueva casa
+	action build(sector sect){	
+		create building number:1{
+			location <- any_location_in(sect);
+			flgCreated <- true;
+			create people number:1+rnd(3){
+				home <- myself;
+				location <- home.location;
+			}
+		}
+	}
+	
+	
 }
 
 species bus_stops{
