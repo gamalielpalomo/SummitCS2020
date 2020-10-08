@@ -16,8 +16,11 @@ global{
 	geometry shape <- envelope(mask_file);
 	graph road_network;
 	
+	float interaction_distance<-1.0;
+	int count_interactions <- 0;
 	//Graph related variables
 	float beta_index;
+	
 	
 	init{
 		step <- 20#second;
@@ -28,6 +31,7 @@ global{
 		road_network <- as_edge_graph(road);
 		create building from:buildings_file;
 		ask building{
+			flgCreated<-false;
 			create people number:1+rnd(3){
 				home <- myself;
 				location <- home.location;
@@ -51,14 +55,20 @@ global{
 		ask sector{
 			do calculate_density;
 		}
-		 
-		list<sector> ordered_sector <- sector sort_by (each.no_building);
+		
+		list<sector> ordered_sector <- sector sort_by (each.density);
 		ordered_sector <- houses_to_build last ordered_sector;
 		ask ordered_sector
 		{
 			do build sect:self;
 		}
 	}
+	
+	reflex count_interactions when:every(5#minute){
+		count_interactions <- people sum_of each.interactions;
+	}
+	
+
 	
 }
 
@@ -72,6 +82,8 @@ species people skills:[moving]{
 	bool works_out; //This agent works out of the community
 	
 	map<date,agent> agenda_day;
+	
+	int interactions <- 0 update:length(people at_distance(interaction_distance));
 	
 	path path_to_follow;
 	init{
@@ -126,7 +138,8 @@ species edge_agent parent: base_edge {
 
 species building parent:graph_node edge_species:edge_agent{
 	float isolation <- 0.0;
-	bool flgCreated <- false;
+	bool flgCreated;
+	
 	bool related_to (building other){
 		using topology(world){
 			return (location distance_to other < 100#m);	
@@ -136,15 +149,15 @@ species building parent:graph_node edge_species:edge_agent{
 	aspect default{
 		if flgCreated
 		{
-			draw square(7#m) color:rgb (81, 188, 58,255) depth:10;
+			draw square(7) color:rgb (81, 188, 58,255) depth:10;
 		}
 		else
 		{
 			draw shape color:rgb (81, 188, 58,255) depth:10;
-		}
-		draw shape color:rgb (81, 188, 58,255) depth:10;		
+		}	
 		//draw house_icon size:80;
 	}
+
 }
 
 species park{
@@ -156,7 +169,10 @@ species park{
 
 species sector{
 	list<building> buildings -> {building inside self};
-	int no_building<-0;
+	float no_building <- 0.0;
+	float no_bus_stops <- 0.0;
+	float no_parks <- 0.0;
+	float density<-0.0;
 	bool flgFull <- false;
    
 	
@@ -170,10 +186,11 @@ species sector{
 	// metodo que puede usarse para calcular una metrica de construcción
 	action calculate_density
 	{
-		no_building <- length(agents_inside(self));
+		list<building> n_houses <- building inside self;
+		no_building <- float(length(n_houses));
+		
+		density <- no_building;
 	}
-	
-	
 	
 	// constrye una nueva casa
 	action build(sector sect){	
@@ -202,7 +219,7 @@ species bus_stops{
 
 experiment simulation type:gui{
 	output{
-		display "main" background:#black draw_env:false{
+		display "main" background:#black type:opengl draw_env:false{
 			species road aspect:default;
 			species sector aspect:default;
 			species park aspect:default;
@@ -221,8 +238,11 @@ experiment simulation type:gui{
 				draw "People: " +  length(people) at: { 20#px, 60#px } color: #white font:font("Arial",19,#bold);
 				draw ""+current_date.hour+":"+minutes at:{ 20#px, 20#px} color:#white font:font("Arial",55,#bold);
 				draw "Beta index: "+ beta_index at:{20#px, 100#px} color: #white font:font("Arial",19,#bold);
-				
+				draw "Buildings: "+length(building) at:{20#px, 140#px} color: #white font:font("Arial",19,#bold);
+				draw "Interactions: "+count_interactions at:{20#px, 160#px} color: #white font:font("Arial",19,#bold);
 			}
 		}
+		
 	}
+
 }
