@@ -12,18 +12,19 @@ global{
 	bool show_sectors parameter: "Show sectors" category:"Visualization" <- false;
 	bool show_bus parameter: "Show bus stops" category:"Visualization" <- false;
 	bool show_isolation parameter: "Show isolation" category:"Visualization" <- false;
+	bool show_interactions parameter: "Show interactions" category:"Visualization" <- false;
 	
 	geometry shape <- envelope(mask_file);
 	graph road_network;
 	
-	float interaction_distance<-1.0;
+	float interaction_distance<-10#meters;
 	int count_interactions <- 0;
 	//Graph related variables
 	float beta_index;
 	
 	
 	init{
-		step <- 20#second;
+		step <- 30#second;
 		create road from: roads_file;
 		create blocks from:blocks_file;
 		create sector from:grids_file;
@@ -46,11 +47,11 @@ global{
 		}
 	}
 	
-	reflex connectivity when:every(1#day){
+	reflex connectivity when:every(3#hour){
 		beta_index <- beta_index(one_of(building).my_graph);
 	}
 	
-	reflex populate_neighborhood when:every(1#day){
+	reflex populate_neighborhood when:every(3#hour){
 		int houses_to_build <- rnd(10);
 		ask sector{
 			do calculate_density;
@@ -65,10 +66,8 @@ global{
 	}
 	
 	reflex count_interactions when:every(5#minute){
-		count_interactions <- people sum_of each.interactions;
+		count_interactions <- people sum_of length(each.interactions);
 	}
-	
-
 	
 }
 
@@ -82,14 +81,19 @@ species people skills:[moving]{
 	bool works_out; //This agent works out of the community
 	
 	map<date,agent> agenda_day;
+	list<people> interactions;
 	
-	int interactions <- 0 update:length(people at_distance(interaction_distance));
 	
 	path path_to_follow;
 	init{
 		target <- one_of(sector) as building;
 		foreign <- false;
 		works_out <- flip(0.5);
+	}
+	reflex update_interactions when:every(5#minute){
+		using topology(world){
+			interactions <- people at_distance interaction_distance;	
+		}
 	}
 	reflex create_new_agenda when:empty(agenda_day){
 		int hours_for_activities <- rnd(4,14);
@@ -112,6 +116,12 @@ species people skills:[moving]{
 	}
 	aspect default{
 		draw circle(3) color:#yellow;
+		if show_interactions{
+			loop contact over:interactions{
+				
+				draw curve(location, contact.location,1.0, 200, 90) color:rgb (255, 255, 255,255);
+			}
+		}
 	}
 }
 
@@ -147,14 +157,7 @@ species building parent:graph_node edge_species:edge_agent{
     }
     
 	aspect default{
-		if flgCreated
-		{
-			draw square(7) color:rgb (81, 188, 58,255) depth:10;
-		}
-		else
-		{
-			draw shape color:rgb (81, 188, 58,255) depth:10;
-		}	
+		draw shape color:rgb (81, 188, 58,255) depth:10;	
 		//draw house_icon size:80;
 	}
 
@@ -195,6 +198,7 @@ species sector{
 	// constrye una nueva casa
 	action build(sector sect){	
 		create building number:1{
+			shape <- one_of(building).shape;
 			location <- any_location_in(sect);
 			flgCreated <- true;
 			create people number:1+rnd(3){
