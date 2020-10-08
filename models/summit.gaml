@@ -32,11 +32,14 @@ global{
 		road_network <- as_edge_graph(road);
 		create building from:buildings_file;
 		ask building{
-			flgCreated<-false;
 			create people number:1+rnd(3){
 				home <- myself;
 				location <- home.location;
 			}
+		}
+		
+		ask sector{
+			do calculate_max_buildings;
 		}
 	}
 	
@@ -52,17 +55,22 @@ global{
 	}
 	
 	reflex populate_neighborhood when:every(3#hour){
-		int houses_to_build <- rnd(10);
-		ask sector{
-			do calculate_density;
+		if #cycle>0{
+			int houses_to_build <- rnd(10);
+			ask sector{
+				do calculate_density;
+			}
+			
+			list<sector> sector_with_space <- sector where(each.flgFull=false);
+			
+			sector_with_space <- sector_with_space sort_by (each.density);
+			sector_with_space <- houses_to_build last sector_with_space;
+			ask sector_with_space
+			{
+				do build sect:self;
+			}
 		}
 		
-		list<sector> ordered_sector <- sector sort_by (each.density);
-		ordered_sector <- houses_to_build last ordered_sector;
-		ask ordered_sector
-		{
-			do build sect:self;
-		}
 	}
 	
 	reflex count_interactions when:every(5#minute){
@@ -148,7 +156,7 @@ species edge_agent parent: base_edge {
 
 species building parent:graph_node edge_species:edge_agent{
 	float isolation <- 0.0;
-	bool flgCreated;
+	bool created<-true;
 	
 	bool related_to (building other){
 		using topology(world){
@@ -156,11 +164,13 @@ species building parent:graph_node edge_species:edge_agent{
 		}
     }
     
+    
 	aspect default{
 		draw shape color:rgb (81, 188, 58,255) depth:10;	
+		//draw square(5#m) color:rgb (81, 188, 58,255) depth:10;	
 		//draw house_icon size:80;
 	}
-
+	
 }
 
 species park{
@@ -171,13 +181,12 @@ species park{
 }
 
 species sector{
-	list<building> buildings -> {building inside self};
 	float no_building <- 0.0;
 	float no_bus_stops <- 0.0;
 	float no_parks <- 0.0;
 	float density<-0.0;
 	bool flgFull <- false;
-   
+	int max_houses<-0;
 	
 	aspect default{
 		if show_sectors{
@@ -186,21 +195,38 @@ species sector{
 		}
 	}
 	
+
+	
+	action calculate_max_buildings
+	{
+		geometry space<-copy(shape);
+		list<geometry> var0 <- to_squares(space, 10#m, true);
+		max_houses <- length(var0);
+		write name+" ----- "+max_houses;
+	}
+	
 	// metodo que puede usarse para calcular una metrica de construcción
 	action calculate_density
 	{
-		list<building> n_houses <- building inside self;
+		if flgFull=false{
+			list<building> n_houses <- building inside self;
 		no_building <- float(length(n_houses));
+		if no_building >= max_houses{
+			flgFull<-true;
+		}
 		
 		density <- no_building;
+		}
 	}
 	
 	// constrye una nueva casa
 	action build(sector sect){	
+		list<blocks> overlapping_blocks <- blocks overlapping(self);
+		int l_overlapping<-length(overlapping_blocks);
 		create building number:1{
 			shape <- one_of(building).shape;
-			location <- any_location_in(sect);
-			flgCreated <- true;
+			location <- any_location_in(sect intersection overlapping_blocks[rnd(l_overlapping)]);
+			 
 			create people number:1+rnd(3){
 				home <- myself;
 				location <- home.location;
@@ -230,7 +256,7 @@ experiment simulation type:gui{
 			species people aspect:default;
 			species bus_stops aspect:default;
 			//species blocks aspect:default refresh:false;
-			species building aspect:default refresh:false;
+			species building aspect:default;
 			species edge_agent aspect: base;
 			overlay position: { 40#px, 30#px } size: { 0,0} background: # black transparency: 0.5 border: #black {
 				string minutes;
