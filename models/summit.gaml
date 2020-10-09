@@ -14,6 +14,7 @@ global{
 	bool show_bus parameter: "Show bus stops" category:"Visualization" <- false;
 	bool show_isolation parameter: "Show isolation" category:"Visualization" <- false;
 	bool show_interactions parameter: "Show interactions" category:"Visualization" <- false;
+	int building_distance parameter: "Interaction between buildings" category:"Visualization" <- 100 min:50 max:200;
 	
 	geometry shape <- envelope(mask_file);
 	graph road_network;
@@ -182,7 +183,7 @@ species building parent:graph_node edge_species:edge_agent{
 	
 	bool related_to (building other){
 		using topology(world){
-			return (location distance_to other < 100#m);	
+			return (location distance_to other < building_distance#m);	
 		}
     }
     
@@ -282,6 +283,7 @@ experiment simulation type:gui{
 	output{
 		layout #split;
 		display "main" background:#black type:opengl draw_env:false{
+			species park aspect:default;
 			species road aspect:default;
 			species sector aspect:default;
 			
@@ -290,7 +292,7 @@ experiment simulation type:gui{
 			//species blocks aspect:default refresh:false;
 			species building aspect:default;
 			species edge_agent aspect: base;
-			species park aspect:default;
+			
 			overlay position: { 40#px, 30#px } size: { 0,0} background: # black transparency: 0.5 border: #black {
 				string minutes;
 				if current_date.minute < 10{minutes <- "0"+current_date.minute; }
